@@ -339,8 +339,8 @@ class CPU {
           const regcode = op - 0xB0; const imm8 = this.fetch8(); this.reg8FromCode(regcode).set(imm8); }
         else if (op >= 0xB8 && op <= 0xBF) { // MOV r16, imm16
           const regcode = op - 0xB8; const imm16 = this.fetch16(); this.reg16FromCode(regcode).set(imm16); }
-        else if (op >= 0x40 && op <= 0x47) { const code = op - 0x40; const a = this.reg16FromCode(code).get(); const res=(a+1)&0xFFFF; this.reg16FromCode(code).set(res); this.flags.ZF=(res===0)?1:0; this.flags.SF=(res&0x8000)?1:0; this.flags.PF=this.parity(res&0xFF)?1:0; this.flags.AF=(((a&0xF)+1)>0xF)?1:0; this.flags.OF=(a===0x7FFF)?1:0; }
-        else if (op >= 0x48 && op <= 0x4F) { const code = op - 0x48; const a = this.reg16FromCode(code).get(); const res=(a-1)&0xFFFF; this.reg16FromCode(code).set(res); this.flags.ZF=(res===0)?1:0; this.flags.SF=(res&0x8000)?1:0; this.flags.PF=this.parity(res&0xFF)?1:0; this.flags.AF=(((a&0xF)-1)<0)?1:0; this.flags.OF=(a===0x8000)?1:0; }
+        else if (op >= 0x40 && op <= 0x47) { const code = op - 0x40; const a = this.reg16FromCode(code).get(); const res=(a+1)&0xFFFF; this.reg16FromCode(code).set(res); this.flags.ZF=(res===0)?1:0; }
+        else if (op >= 0x48 && op <= 0x4F) { const code = op - 0x48; const a = this.reg16FromCode(code).get(); const res=(a-1)&0xFFFF; this.reg16FromCode(code).set(res); this.flags.ZF=(res===0)?1:0; }
         else if (op >= 0x50 && op <= 0x57) { const code = op-0x50; const val = this.reg16FromCode(code).get(); this.push16(val); }
         else if (op >= 0x58 && op <= 0x5F) { const code = op-0x58; const v = this.pop16(); this.reg16FromCode(code).set(v); }
         else if (op === 0xA0) { const addr = this.fetch16(); const phys = this.physicalAddr(this.segments.CS, addr); this.reg8FromCode(0).set(this.read8(phys)); }
@@ -350,10 +350,10 @@ class CPU {
         else if (op >= 0x00 && op <= 0x03) {
           // ADD group implemented earlier - handle here for clarity
           if (op === 0x00) {
-            const m = this.decodeModRM(); const r = this.reg8FromCode(m.reg).get(); if (m.mod===3) { const a=this.reg8FromCode(m.rm).get(); const res=a+r; this.reg8FromCode(m.rm).set(res&0xFF); this.updateFlagsAdd8(a,r,res);} else { const phys=this.physicalAddr(m.seg,m.ea); const a=this.read8(phys); const res=a+r; this.write8(phys,res&0xFF); this.updateFlagsAdd8(a,r,res);} }
-          else if (op === 0x01) { const m=this.decodeModRM(); const r=this.reg16FromCode(m.reg).get(); if (m.mod===3) { const a=this.reg16FromCode(m.rm).get(); const res=a+r; this.reg16FromCode(m.rm).set(res&0xFFFF); this.updateFlagsAdd16(a,r,res);} else { const phys=this.physicalAddr(m.seg,m.ea); const a=this.read16(phys); const res=a+r; this.write16(phys,res&0xFFFF); this.updateFlagsAdd16(a,r,res);} }
-          else if (op === 0x02) { const m=this.decodeModRM(); if (m.mod===3) { const a=this.reg8FromCode(m.reg).get(); const b=this.reg8FromCode(m.rm).get(); const res=a+b; this.reg8FromCode(m.reg).set(res&0xFF); this.updateFlagsAdd8(a,b,res);} else { const a=this.reg8FromCode(m.reg).get(); const phys=this.physicalAddr(m.seg,m.ea); const b=this.read8(phys); const res=a+b; this.reg8FromCode(m.reg).set(res&0xFF); this.updateFlagsAdd8(a,b,res);} }
-          else if (op === 0x03) { const m=this.decodeModRM(); if (m.mod===3) { const a=this.reg16FromCode(m.reg).get(); const b=this.reg16FromCode(m.rm).get(); const res=a+b; this.reg16FromCode(m.reg).set(res&0xFFFF); this.updateFlagsAdd16(a,b,res);} else { const a=this.reg16FromCode(m.reg).get(); const phys=this.physicalAddr(m.seg,m.ea); const b=this.read16(phys); const res=a+b; this.reg16FromCode(m.reg).set(res&0xFFFF); this.updateFlagsAdd16(a,b,res);} }
+            const m = this.decodeModRM(); const r = this.reg8FromCode(m.reg).get(); if (m.mod===3) { const a=this.reg8FromCode(m.rm).get(); const res=a+r; this.reg8FromCode(m.rm).set(res&0xFF); }
+          else if (op === 0x01) { const m=this.decodeModRM(); const r=this.reg16FromCode(m.reg).get(); if (m.mod===3) { const a=this.reg16FromCode(m.rm).get(); const res=a+r; this.reg16FromCode(m.rm).set(res&0xFFFF); }}
+          else if (op === 0x02) { const m=this.decodeModRM(); if (m.mod===3) { const a=this.reg8FromCode(m.reg).get(); const b=this.reg8FromCode(m.rm).get(); const res=a+b; this.reg8FromCode(m.reg).set(res&0xFF); }}
+          else if (op === 0x03) { const m=this.decodeModRM(); if (m.mod===3) { const a=this.reg16FromCode(m.reg).get(); const b=this.reg16FromCode(m.rm).get(); const res=a+b; this.reg16FromCode(m.reg).set(res&0xFFFF); }}
         }
         else if (op === 0xEB) { const rel = (this.fetch8()<<24)>>24; this.IP = (this.IP + rel) & 0xFFFF; }
         else if (op === 0xE9) { const rel = (this.fetch16()<<16)>>16; this.IP = (this.IP + rel) & 0xFFFF; }
@@ -430,10 +430,10 @@ class CPU {
           if (op===0xF6) {
             // byte
             if (code === 0) {
-              const imm = this.fetch8(); const val = (m.mod===3)?this.reg8FromCode(m.rm).get():this.read8(this.physicalAddr(m.seg,m.ea)); const res = val & imm; this.flags.ZF=(res===0)?1:0; this.flags.SF=(res&0x80)?1:0; this.flags.PF=this.parity(res)?1:0; this.flags.CF=0; this.flags.OF=0;
+              const imm = this.fetch8(); const val = (m.mod===3)?this.reg8FromCode(m.rm).get():this.read8(this.physicalAddr(m.seg,m.ea)); const res = val & imm; this.flags.ZF=(res===0)?1:0; this.flags.SF=(res&0x80)?1:0; this.flags.PF=this.parity(res&0xFF)?1:0; this.flags.CF=0; this.flags.OF=0;
             } else if (code === 2) {
               // NOT
-              if (m.mod===3) { const v=this.reg8FromCode(m.rm).get(); this.reg8FromCode(m.rm).set((~v)&0xFF); } else { const phys=this.physicalAddr(m.seg,m.ea); const v=this.read8(phys); this.write8(phys,(~v)&0xFF); }
+              if (m.mod===3) { const v=this.reg8FromCode(m.rm).get(); this.reg8FromCode(m.rm).set((~v)&0xFF); } else { const phys=this.physicalAddr(m.seg,m.ea); const v=this.read8(phys); this.write8(phys, (~v)&0xFF); }
             } else if (code === 3) {
               // NEG
               if (m.mod===3) { const v=this.reg8FromCode(m.rm).get(); const res = (0 - v) & 0xFF; this.reg8FromCode(m.rm).set(res); this.updateFlagsSub8(0,v,0-v); } else { const phys=this.physicalAddr(m.seg,m.ea); const v=this.read8(phys); const res=(0-v)&0xFF; this.write8(phys,res); this.updateFlagsSub8(0,v,0-v); }
@@ -445,7 +445,7 @@ class CPU {
             if (code === 0) {
               const imm = this.fetch16(); const val = (m.mod===3)?this.reg16FromCode(m.rm).get():this.read16(this.physicalAddr(m.seg,m.ea)); const res = val & imm; this.flags.ZF=(res===0)?1:0; this.flags.SF=(res&0x8000)?1:0; this.flags.PF=this.parity(res&0xFF)?1:0; this.flags.CF=0; this.flags.OF=0;
             } else if (code === 2) {
-              if (m.mod===3) { const v=this.reg16FromCode(m.rm).get(); this.reg16FromCode(m.rm).set((~v)&0xFFFF); } else { const phys=this.physicalAddr(m.seg,m.ea); const v=this.read16(phys); this.write16(phys,(~v)&0xFFFF); }
+              if (m.mod===3) { const v=this.reg16FromCode(m.rm).get(); this.reg16FromCode(m.rm).set((~v)&0xFFFF); } else { const phys=this.physicalAddr(m.seg,m.ea); const v=this.read16(phys); this.write16(phys, (~v)&0xFFFF); }
             } else if (code === 3) {
               if (m.mod===3) { const v=this.reg16FromCode(m.rm).get(); const res=(0-v)&0xFFFF; this.reg16FromCode(m.rm).set(res); this.updateFlagsSub16(0,v,0-v); } else { const phys=this.physicalAddr(m.seg,m.ea); const v=this.read16(phys); const res=(0-v)&0xFFFF; this.write16(phys,res); this.updateFlagsSub16(0,v,0-v); }
             } else {
@@ -459,11 +459,11 @@ class CPU {
           if (op === 0xFE) {
             // INC/DEC r/m8
             if (m.reg === 0) {
-              if (m.mod===3) { const v=this.reg8FromCode(m.rm).get(); const r=(v+1)&0xFF; this.reg8FromCode(m.rm).set(r); this.flags.ZF=(r===0)?1:0; this.flags.SF=(r&0x80)?1:0; this.flags.PF=this.parity(r)?1:0; }
-              else { const phys=this.physicalAddr(m.seg,m.ea); const v=this.read8(phys); const r=(v+1)&0xFF; this.write8(phys,r); this.flags.ZF=(r===0)?1:0; this.flags.SF=(r&0x80)?1:0; this.flags.PF=this.parity(r)?1:0; }
+              if (m.mod===3) { const v=this.reg8FromCode(m.rm).get(); const r=(v+1)&0xFF; this.reg8FromCode(m.rm).set(r); this.flags.ZF=(r===0)?1:0; this.flags.SF=(r&0x80)?1:0; this.flags.PF=this.parity(r&0xFF)?1:0; }
+              else { const phys=this.physicalAddr(m.seg,m.ea); const v=this.read8(phys); const r=(v+1)&0xFF; this.write8(phys,r); this.flags.ZF=(r===0)?1:0; this.flags.SF=(r&0x80)?1:0; this.flags.PF=this.parity(r&0xFF)?1:0; }
             } else if (m.reg === 1) {
-              if (m.mod===3) { const v=this.reg8FromCode(m.rm).get(); const r=(v-1)&0xFF; this.reg8FromCode(m.rm).set(r); this.flags.ZF=(r===0)?1:0; this.flags.SF=(r&0x80)?1:0; this.flags.PF=this.parity(r)?1:0; }
-              else { const phys=this.physicalAddr(m.seg,m.ea); const v=this.read8(phys); const r=(v-1)&0xFF; this.write8(phys,r); this.flags.ZF=(r===0)?1:0; this.flags.SF=(r&0x80)?1:0; this.flags.PF=this.parity(r)?1:0; }
+              if (m.mod===3) { const v=this.reg8FromCode(m.rm).get(); const r=(v-1)&0xFF; this.reg8FromCode(m.rm).set(r); this.flags.ZF=(r===0)?1:0; this.flags.SF=(r&0x80)?1:0; this.flags.PF=this.parity(r&0xFF)?1:0; }
+              else { const phys=this.physicalAddr(m.seg,m.ea); const v=this.read8(phys); const r=(v-1)&0xFF; this.write8(phys,r); this.flags.ZF=(r===0)?1:0; this.flags.SF=(r&0x80)?1:0; this.flags.PF=this.parity(r&0xFF)?1:0; }
             } else { this.onConsole(`[FE group sub-op ${m.reg} unimplemented]`); }
           } else {
             // FF group
@@ -496,11 +496,57 @@ class CPU {
           // Note: POP SS is privileged on some CPUs; for emulator allow it
           this.segments.SS = this.pop16();
         }
-        else if (op === 0x30 || op === 0x31 || op === 0x32 || op === 0x33 || op === 0x34 || op === 0x35) {
-          // XOR/TEST variants covered earlier partially; ignore here for brevity
-          // fallthrough to unimplemented
-          this.onConsole(`[opcode 0x${op.toString(16)} not explicitly handled in extended switch]`);
-          this.halted = true;
+        else if (op === 0x30) {
+          // XOR r/m8, r8
+          const m = this.decodeModRM(); const src = this.reg8FromCode(m.reg).get();
+          if (m.mod===3) {
+            const dest = this.reg8FromCode(m.rm).get(); const res = (dest ^ src) & 0xFF;
+            this.reg8FromCode(m.rm).set(res);
+            this.flags.CF = 0; this.flags.OF = 0; this.flags.ZF = (res===0)?1:0; this.flags.SF = (res & 0x80)?1:0; this.flags.PF = this.parity(res&0xFF)?1:0;
+          } else {
+            const phys = this.physicalAddr(m.seg,m.ea); const dest = this.read8(phys); const res = (dest ^ src) & 0xFF;
+            this.write8(phys,res);
+            this.flags.CF = 0; this.flags.OF = 0; this.flags.ZF = (res===0)?1:0; this.flags.SF = (res & 0x80)?1:0; this.flags.PF = this.parity(res&0xFF)?1:0;
+          }
+        }
+        else if (op === 0x31) {
+          // XOR r/m16, r16
+          const m = this.decodeModRM(); const src = this.reg16FromCode(m.reg).get();
+          if (m.mod===3) {
+            const dest = this.reg16FromCode(m.rm).get(); const res = (dest ^ src) & 0xFFFF;
+            this.reg16FromCode(m.rm).set(res);
+            this.flags.CF = 0; this.flags.OF = 0; this.flags.ZF = (res===0)?1:0; this.flags.SF = (res & 0x8000)?1:0; this.flags.PF = this.parity(res&0xFF)?1:0;
+          } else {
+            const phys = this.physicalAddr(m.seg,m.ea); const dest = this.read16(phys); const res = (dest ^ src) & 0xFFFF;
+            this.write16(phys,res);
+            this.flags.CF = 0; this.flags.OF = 0; this.flags.ZF = (res===0)?1:0; this.flags.SF = (res & 0x8000)?1:0; this.flags.PF = this.parity(res&0xFF)?1:0;
+          }
+        }
+        else if (op === 0x32) {
+          // XOR r8, r/m8
+          const m = this.decodeModRM(); let src = 0;
+          if (m.mod===3) src = this.reg8FromCode(m.rm).get(); else src = this.read8(this.physicalAddr(m.seg,m.ea));
+          const dest = this.reg8FromCode(m.reg).get(); const res = (dest ^ src) & 0xFF;
+          this.reg8FromCode(m.reg).set(res);
+          this.flags.CF = 0; this.flags.OF = 0; this.flags.ZF = (res===0)?1:0; this.flags.SF = (res & 0x80)?1:0; this.flags.PF = this.parity(res&0xFF)?1:0;
+        }
+        else if (op === 0x33) {
+          // XOR r16, r/m16
+          const m = this.decodeModRM(); let src = 0;
+          if (m.mod===3) src = this.reg16FromCode(m.rm).get(); else src = this.read16(this.physicalAddr(m.seg,m.ea));
+          const dest = this.reg16FromCode(m.reg).get(); const res = (dest ^ src) & 0xFFFF;
+          this.reg16FromCode(m.reg).set(res);
+          this.flags.CF = 0; this.flags.OF = 0; this.flags.ZF = (res===0)?1:0; this.flags.SF = (res & 0x8000)?1:0; this.flags.PF = this.parity(res&0xFF)?1:0;
+        }
+        else if (op === 0x34) {
+          // XOR AL, imm8
+          const imm = this.fetch8(); const al = this.reg8FromCode(0).get(); const res = (al ^ imm) & 0xFF; this.reg8FromCode(0).set(res);
+          this.flags.CF = 0; this.flags.OF = 0; this.flags.ZF = (res===0)?1:0; this.flags.SF = (res & 0x80)?1:0; this.flags.PF = this.parity(res&0xFF)?1:0;
+        }
+        else if (op === 0x35) {
+          // XOR AX, imm16
+          const imm = this.fetch16(); const ax = this.reg16FromCode(0).get(); const res = (ax ^ imm) & 0xFFFF; this.reg16FromCode(0).set(res);
+          this.flags.CF = 0; this.flags.OF = 0; this.flags.ZF = (res===0)?1:0; this.flags.SF = (res & 0x8000)?1:0; this.flags.PF = this.parity(res&0xFF)?1:0;
         }
         else {
           this.onConsole(`[UNIMPLEMENTED OPCODE 0x${op.toString(16)} at ${this.segments.CS.toString(16)}:${(this.IP-1).toString(16)}]`);
